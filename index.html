@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moolman ken woorde</title>
+    <title>Wordle Clone</title>
     <style>
         :root {
             --tile-size: 60px;
@@ -217,7 +217,7 @@
 <body>
 
     <header>
-        <h1>Ons ken woorde</h1>
+        <h1>WORDLE</h1>
     </header>
 
     <div id="message-box"></div>
@@ -312,10 +312,10 @@
         let currentGuess = 0;
         let currentTile = 0;
         let gameActive = true;
-        // The SECRET_WORD variable is now loaded from config.js
-        let secretLetters; // Will be initialized in the setup function
+        // SECRET_WORD is loaded from config.js
+        let secretLetters; 
 
-        // EXTENDED Hardcoded Word List for Validation (Over 5,700 common 5-letter words)
+        // The DICTIONARY is still defined, but word validation is currently disabled in checkGuess().
         const DICTIONARY = new Set([
             "aback", "abase", "abate", "abbey", "abbot", "abets", "abhor", "abide", "abler", "abode", 
             "abort", "about", "above", "abuse", "abyss", "ached", "aches", "acids", "acorn", "acres", 
@@ -395,7 +395,7 @@
             "fixes", "fizz", "flair", "flame", "flank", "flash", "flask", "flats", "flaws", "fleas", 
             "flees", "fleet", "flesh", "flick", "flied", "flies", "flint", "flips", "flirt", "float", 
             "flock", "flood", "floor", "flops", "flour", "flout", "flown", "flows", "fluff", "fluid", 
-            "fluke", "flush", "flute", "foams", "foamy", "focus", "foggy", "foils", "folds", "fonts", 
+            "fluke", "flush", "flute", "foams", "fomy", "focus", "foggy", "foils", "folds", "fonts", 
             "foods", "fools", "force", "forge", "forth", "forty", "forum", "found", "fours", "fowls", 
             "foxes", "foyer", "frail", "frame", "fraud", "frays", "freak", "fresh", "fries", "frisk", 
             "fritz", "frock", "frond", "front", "frost", "froth", "frown", "froze", "fruit", "fudge", 
@@ -511,68 +511,69 @@
             "since", "sinew", "singe", "sinks", "siren", "sixth", "sixty", "sized", "sizes", "skate", 
             "skeet", "skews", "skids", "skied", "skier", "skies", "skill", "skims", "skins", "skips", 
             "skirt", "skull", "skunk", "slabs", "slack", "slain", "slams", "slash", "slate", "slave", 
-            "sleek", "sleep", "sleet", "slept", "slice", "slick", "slide", "slims", "" , "sling", 
-            "slips", "slits", "slope", "sloth", "slots", "slows", "slump", "slung", "slunk", "slurp", 
-            "slush", "sluts", "small", "smart", "smash", "smell", "smelt", "smile", "smirk", "smite", 
-            "smoke", "smoky", "smote", "snack", "snafu", "snail", "snake", "snaky", "snaps", "snare", 
-            "snarl", "sneak", "sneer", "sniff", "snipe", "snips", "snore", "snort", "snout", "snowy", 
-            "socks", "sodas", "sofas", "softy", "soggy", "solar", "soles", "solid", "solve", "songs", 
-            "sonic", "sonny", "sorry", "sorts", "souls", "sound", "soup", "sour", "south", "sowed", 
-            "sower", "space", "spade", "spank", "spans", "spare", "spark", "spars", "spasm", "spate", 
-            "spats", "spawn", "speak", "specs", "speed", "spell", "spend", "spent", "spice", "spicy", 
-            "spied", "spiel", "spies", "spike", "spiky", "spill", "spins", "spire", "spite", "splat", 
-            "split", "spoil", "spoke", "spoof", "spook", "spoon", "sport", "spots", "spout", "sprat", 
-            "spray", "spree", "sprig", "spry", "spuds", "spunk", "spurs", "squad", "squat", "squid", 
-            "stack", "staff", "stage", "stair", "stake", "stale", "stamp", "stand", "stank", "stare", 
-            "stars", "start", "state", "stats", "stave", "stays", "stead", "steak", "steal", "steam", 
-            "steel", "steer", "stems", "stent", "steps", "stern", "stews", "stick", "stiff", "still", 
-            "stilt", "sting", "stink", "stint", "stirs", "stock", "stoic", "stoke", "stole", "stomp", 
-            "stone", "stony", "stood", "stool", "stoop", "store", "stork", "storm", "story", "stout", 
-            "stove", "strafe", "strap", "straw", "stray", "strip", "strut", "stubs", "study", "stuff", 
-            "stump", "stung", "stuns", "stunt", "style", "suave", "sucks", "sudsy", "sugar", "suits", 
-            "sulky", "sully", "sumac", "sunny", "super", "surfs", "sushi", "swabs", "swamp", "swank", 
-            "swaps", "swarm", "sways", "swear", "sweat", "sweep", "sweet", "swell", "swept", "swift", 
-            "swims", "swine", "swing", "swipe", "swirl", "swish", "swoop", "swore", "sworn", "sykes", 
-            "synod", "syrup", "tabby", "table", "taboo", "tacit", "tacky", "taffy", "tails", "taken", 
-            "takes", "tales", "talks", "tally", "tamed", "tamer", "tames", "tango", "tangs", "tangy", 
-            "taped", "tapes", "tardy", "tarot", "tasks", "taste", "tasty", "tatty", "taunt", "taxes", 
-            "teach", "teams", "tears", "tease", "teats", "teens", "teeny", "teeth", "tempo", "tends", 
-            "tenet", "tenor", "tense", "tenth", "tents", "terms", "tests", "texas", "thaws", "their", 
-            "theme", "there", "these", "theta", "thick", "thief", "thigh", "thing", "think", "third", 
-            "those", "three", "threw", "throb", "throw", "thrum", "thugs", "thumb", "thump", "thyme", 
-            "tibia", "tidal", "tides", "tiers", "tiger", "tight", "tiled", "tiles", "tills", "tilts", 
-            "timed", "timer", "times", "tined", "tines", "tinge", "tipsy", "tired", "tires", "titan", 
-            "title", "toads", "toast", "today", "token", "tolls", "tombs", "toned", "tones", "tongs", 
-            "tonic", "tools", "tooth", "topaz", "topic", "torts", "total", "touch", "tough", "tours", 
-            "towed", "towel", "tower", "towns", "toxic", "toxin", "trace", "track", "tract", "trade", 
-            "trail", "train", "trait", "tramp", "trams", "traps", "trash", "trawl", "trays", "tread", 
-            "treat", "trees", "treks", "trend", "tress", "trial", "tribe", "trick", "tried", "tries", 
-            "trims", "trio", "tripe", "trips", "trods", "troll", "tromp", "troop", "trot", "trout", 
-            "truce", "truck", "truer", "truly", "trump", "trunk", "truss", "trust", "truth", "tuber", 
-            "tubes", "tucks", "tulip", "tummy", "tunes", "turbo", "turds", "turns", "tutor", "tweak", 
-            "tweed", "twice", "twigs", "twine", "twins", "twirl", "tying", "tykes", "typed", "types", 
-            "typos", "udder", "ulcer", "ultra", "umami", "unapt", "unarm", "undid", "undue", "unify", 
-            "union", "unite", "units", "unity", "unlit", "until", "unwed", "unzip", "upper", "upset", 
-            "urban", "urged", "urges", "urine", "usage", "users", "usher", "usual", "usurp", "utter", 
-            "vague", "valet", "valid", "valor", "value", "valve", "vapid", "vases", "vault", "veals", 
-            "veins", "velar", "veldt", "venom", "vents", "venue", "verbs", "verge", "verse", "vices", 
-            "video", "views", "vigil", "vile", "vines", "vinyl", "viola", "vipers", "viral", "vireo", 
-            "virus", "visit", "vital", "vivid", "vixen", "vocal", "vodka", "vogue", "voice", "voids", 
-            "volts", "voted", "voter", "votes", "vowed", "vowel", "wad", "wafer", "waged", "wager", 
-            "wages", "waist", "waits", "waive", "waked", "wakes", "walks", "walls", "waltz", "wands", 
-            "wants", "wards", "ware", "warmth", "warns", "warts", "warty", "washy", "waste", "watch", 
-            "water", "watts", "waves", "waxes", "weary", "weave", "wedge", "weeds", "weedy", "weigh", 
-            "weird", "welds", "wells", "whack", "whale", "wharf", "wheat", "wheel", "where", "whiff", 
-            "while", "whims", "whine", "whips", "whirl", "whisk", "white", "whole", "whose", "wicks", 
-            "widen", "wider", "widow", "width", "wield", "wilds", "wiles", "wills", "wince", "winch", 
-            "winds", "windy", "wines", "wings", "winks", "wiped", "wiper", "wipes", "wired", "wires", 
-            "wiser", "wishes", "wisps", "witch", "witty", "wives", "woman", "wombs", "woods", "woody", 
-            "wooer", "words", "wordy", "works", "world", "worms", "worry", "worse", "worst", "worth", 
-            "would", "wound", "wrack", "wraps", "wrath", "wreck", "wrens", "wrest", "wrier", "wring", 
-            "write", "wrong", "wrote", "yacht", "yards", "yarns", "yawns", "yearn", "years", "yeast", 
-            "yield", "yokes", "young", "yours", "youth", "yummy", "zany", "zesty", "zincs", "zings", 
-            "zippy", "zonal"
+            "sleek", "sleep", "sleet", "slept", "slice", "slick", "slide", "slims", "sling", "slips", 
+            "slits", "slope", "sloth", "slots", "slows", "slump", "slung", "slunk", "slurp", "slush", 
+            "sluts", "small", "smart", "smash", "smell", "smelt", "smile", "smirk", "smite", "smoke", 
+            "smoky", "smote", "snack", "snafu", "snail", "snake", "snaky", "snaps", "snare", "snarl", 
+            "sneak", "sneer", "sniff", "snipe", "snips", "snore", "snort", "snout", "snowy", "socks", 
+            "sodas", "sofas", "softy", "soggy", "solar", "soles", "solid", "solve", "songs", "sonic", 
+            "sonny", "sorry", "sorts", "souls", "sound", "soup", "sour", "south", "sowed", "sower", 
+            "space", "spade", "spank", "spans", "spare", "spark", "spars", "spasm", "spate", "spats", 
+            "spawn", "speak", "specs", "speed", "spell", "spend", "spent", "spice", "spicy", "spied", 
+            "spiel", "spies", "spike", "spiky", "spill", "spins", "spire", "spite", "splat", "split", 
+            "spoil", "spoke", "spoof", "spook", "spoon", "sport", "spots", "spout", "sprat", "spray", 
+            "spree", "sprig", "spry", "spuds", "spunk", "spurs", "squad", "squat", "squid", "stack", 
+            "staff", "stage", "stair", "stake", "stale", "stamp", "stand", "stank", "stare", "stars", 
+            "start", "state", "stats", "stave", "stays", "stead", "steak", "steal", "steam", "steel", 
+            "steer", "stems", "stent", "steps", "stern", "stews", "stick", "stiff", "still", "stilt", 
+            "sting", "stink", "stint", "stirs", "stock", "stoic", "stoke", "stole", "stomp", "stone", 
+            "stony", "stood", "stool", "stoop", "store", "stork", "storm", "story", "stout", "stove", 
+            "strafe", "strap", "straw", "stray", "strip", "strut", "stubs", "study", "stuff", "stump", 
+            "stung", "stuns", "stunt", "style", "suave", "sucks", "sudsy", "sugar", "suits", "sulky", 
+            "sully", "sumac", "sunny", "super", "surfs", "sushi", "swabs", "swamp", "swank", "swaps", 
+            "swarm", "sways", "swear", "sweat", "sweep", "sweet", "swell", "swept", "swift", "swims", 
+            "swine", "swing", "swipe", "swirl", "swish", "swoop", "swore", "sworn", "sykes", "synod", 
+            "syrup", "tabby", "table", "taboo", "tacit", "tacky", "taffy", "tails", "taken", "takes", 
+            "tales", "talks", "tally", "tamed", "tamer", "tames", "tango", "tangs", "tangy", "taped", 
+            "tapes", "tardy", "tarot", "tasks", "taste", "tasty", "tatty", "taunt", "taxes", "teach", 
+            "teams", "tears", "tease", "teats", "teens", "teeny", "teeth", "tempo", "tends", "tenet", 
+            "tenor", "tense", "tenth", "tents", "terms", "tests", "texas", "thaws", "their", "theme", 
+            "there", "these", "theta", "thick", "thief", "thigh", "thing", "think", "third", "those", 
+            "three", "threw", "throb", "throw", "thrum", "thugs", "thumb", "thump", "thyme", "tibia", 
+            "tidal", "tides", "tiers", "tiger", "tight", "tiled", "tiles", "tills", "tilts", "timed", 
+            "timer", "times", "tined", "tines", "tinge", "tipsy", "tired", "tires", "titan", "title", 
+            "toads", "toast", "today", "token", "tolls", "tombs", "toned", "tones", "tongs", "tonic", 
+            "tools", "tooth", "topaz", "topic", "torts", "total", "touch", "tough", "tours", "towed", 
+            "towel", "tower", "towns", "toxic", "toxin", "trace", "track", "tract", "trade", "trail", 
+            "train", "trait", "tramp", "trams", "traps", "trash", "trawl", "trays", "tread", "treat", 
+            "trees", "treks", "trend", "tress", "trial", "tribe", "trick", "tried", "tries", "trims", 
+            "trio", "tripe", "trips", "trods", "troll", "tromp", "troop", "trot", "trout", "truce", 
+            "truck", "truer", "truly", "trump", "trunk", "truss", "trust", "truth", "tuber", "tubes", 
+            "tucks", "tulip", "tummy", "tunes", "turbo", "turds", "turns", "tutor", "tweak", "tweed", 
+            "twice", "twigs", "twine", "twins", "twirl", "tying", "tykes", "typed", "types", "typos", 
+            "udder", "ulcer", "ultra", "umami", "unapt", "unarm", "undid", "undue", "unify", "union", 
+            "unite", "units", "unity", "unlit", "until", "unwed", "unzip", "upper", "upset", "urban", 
+            "urged", "urges", "urine", "usage", "users", "usher", "usual", "usurp", "utter", "vague", 
+            "valet", "valid", "valor", "value", "valve", "vapid", "vases", "vault", "veals", "veins", 
+            "velar", "veldt", "venom", "vents", "venue", "verbs", "verge", "verse", "vices", "video", 
+            "views", "vigil", "vile", "vines", "vinyl", "viola", "vipers", "viral", "vireo", "virus", 
+            "visit", "vital", "vivid", "vixen", "vocal", "vodka", "vogue", "voice", "voids", "volts", 
+            "voted", "voter", "votes", "vowed", "vowel", "wad", "wafer", "waged", "wager", "wages", 
+            "waist", "waits", "waive", "waked", "wakes", "walks", "walls", "waltz", "wands", "wants", 
+            "wards", "ware", "warmth", "warns", "warts", "warty", "washy", "waste", "watch", "water", 
+            "watts", "waves", "waxes", "weary", "weave", "wedge", "weeds", "weedy", "weigh", "weird", 
+            "welds", "wells", "whack", "whale", "wharf", "wheat", "wheel", "where", "whiff", "while", 
+            "whims", "whine", "whips", "whirl", "whisk", "white", "whole", "whose", "wicks", "widen", 
+            "wider", "widow", "width", "wield", "wilds", "wiles", "wills", "wince", "winch", "winds", 
+            "windy", "wines", "wings", "winks", "wiped", "wiper", "wipes", "wired", "wires", "wiser", 
+            "wishes", "wisps", "witch", "witty", "wives", "woman", "wombs", "woods", "woody", "wooer", 
+            "words", "wordy", "works", "world", "worms", "worry", "worse", "worst", "worth", "would", 
+            "wound", "wrack", "wraps", "wrath", "wreck", "wrens", "wrest", "wrier", "wring", "write", 
+            "wrong", "wrote", "yacht", "yards", "yarns", "yawns", "yearn", "years", "yeast", "yield", 
+            "yokes", "young", "yours", "youth", "yummy", "zany", "zesty", "zincs", "zings", "zippy", 
+            "zonal"
         ]);
+
 
         // --- DOM Elements ---
         const gameBoard = document.getElementById('game-board');
@@ -593,13 +594,6 @@
             }
 
             secretLetters = SECRET_WORD.toUpperCase().split('');
-
-            if (SECRET_WORD.length !== WORD_LENGTH || !DICTIONARY.has(SECRET_WORD.toLowerCase())) {
-                console.error(`SECRET_WORD must be ${WORD_LENGTH} letters and in the dictionary! Current word: ${SECRET_WORD}`);
-                showMessage(`Error: Invalid word: ${SECRET_WORD}`, true);
-                gameActive = false;
-                return;
-            }
             
             // --- Event Listeners ---
             document.addEventListener('keydown', handleKeydown);
@@ -608,11 +602,10 @@
         // ---------------------------------
 
 
-        // --- Game Logic Functions (rest of the script remains the same) ---
+        // --- Game Logic Functions ---
 
         /**
          * Handles physical keyboard input.
-         * @param {KeyboardEvent} event 
          */
         function handleKeydown(event) {
             if (!gameActive) return;
@@ -630,7 +623,6 @@
 
         /**
          * Handles virtual keyboard click input.
-         * @param {MouseEvent} event 
          */
         function handleKeyboardClick(event) {
             if (!gameActive) return;
@@ -651,7 +643,6 @@
 
         /**
          * Types a letter into the current tile.
-         * @param {string} letter 
          */
         function typeLetter(letter) {
             if (currentTile < WORD_LENGTH) {
@@ -675,7 +666,7 @@
         }
 
         /**
-         * Submits the current guess for validation and evaluation.
+         * Submits the current guess for evaluation.
          */
         function checkGuess() {
             if (currentTile !== WORD_LENGTH) {
@@ -685,17 +676,22 @@
 
             const currentWord = getCurrentGuessWord();
 
+            // --- DICTIONARY CHECK DISABLED ---
+            // If you want to re-enable word checking, uncomment the lines below:
+            /*
             if (!DICTIONARY.has(currentWord.toLowerCase())) {
                 showMessage("Not in word list!");
                 shakeCurrentRow();
                 return;
             }
+            */
+            // --- DICTIONARY CHECK DISABLED ---
 
             evaluateGuess(currentWord);
 
             if (currentWord === SECRET_WORD) {
                 gameActive = false;
-                setTimeout(() => showMessage("Magnificent!", true), 500 * WORD_LENGTH); // Delay win message
+                setTimeout(() => showMessage("Magnificent!", true), 500 * WORD_LENGTH); 
             } else if (currentGuess === MAX_GUESSES - 1) {
                 gameActive = false;
                 setTimeout(() => showMessage(SECRET_WORD, true, "Game Over! The word was "), 500 * WORD_LENGTH);
@@ -707,7 +703,6 @@
 
         /**
          * Evaluates the guess against the secret word and updates tiles/keyboard.
-         * @param {string} guess 
          */
         function evaluateGuess(guess) {
             const guessLetters = guess.split('');
@@ -728,7 +723,7 @@
 
             // 2. Mark PRESENT/ABSENT letters (Yellow/Gray)
             for (let i = 0; i < WORD_LENGTH; i++) {
-                if (markedIndices[i]) continue; // Skip already marked letters
+                if (markedIndices[i]) continue; 
 
                 const tile = tileElements[i];
                 if (wordCounts[guessLetters[i]] > 0) {
@@ -740,7 +735,7 @@
                     updateKeyStatus(guessLetters[i], 'absent');
                 }
                 
-                // Add flip animation (optional but nice)
+                // Add flip animation
                 setTimeout(() => {
                     tile.style.transform = 'rotateX(90deg)';
                     setTimeout(() => {
@@ -752,8 +747,6 @@
 
         /**
          * Updates the virtual keyboard key color.
-         * @param {string} letter 
-         * @param {('correct'|'present'|'absent')} status 
          */
         function updateKeyStatus(letter, status) {
             const keyElement = document.querySelector(`.key[data-key="${letter}"]`);
@@ -763,15 +756,12 @@
             if (keyElement.classList.contains('correct')) return;
             if (keyElement.classList.contains('present') && status !== 'correct') return;
 
-            // Remove existing status classes and add the new one
             keyElement.classList.remove('absent', 'present');
             keyElement.classList.add(status);
         }
 
         /**
          * Helper to get letter counts from an array of letters.
-         * @param {string[]} letters 
-         * @returns {Object<string, number>}
          */
         function getLetterCounts(letters) {
             return letters.reduce((counts, letter) => {
@@ -782,9 +772,6 @@
 
         /**
          * Helper to get the current tile element.
-         * @param {number} row 
-         * @param {number} col 
-         * @returns {HTMLElement}
          */
         function getTile(row, col) {
             return document.querySelector(`#row-${row} .tile:nth-child(${col + 1})`);
@@ -792,7 +779,6 @@
 
         /**
          * Helper to construct the word from the current row's tiles.
-         * @returns {string}
          */
         function getCurrentGuessWord() {
             let word = '';
@@ -806,15 +792,11 @@
 
         /**
          * Displays a temporary message (toast) to the user.
-         * @param {string} message 
-         * @param {boolean} [isFinal=false] - If true, the message stays longer.
-         * @param {string} [prefix=''] - Optional prefix for final messages.
          */
         function showMessage(message, isFinal = false, prefix = '') {
             messageBox.textContent = prefix + message;
             messageBox.classList.add('visible');
 
-            // Set duration, longer for final messages
             const duration = isFinal ? 3000 : 1500;
 
             clearTimeout(messageBox.timeout);
@@ -830,7 +812,6 @@
             const rowElement = document.getElementById(`row-${currentGuess}`);
             rowElement.classList.add('shake');
             
-            // Remove the class after the animation finishes
             rowElement.addEventListener('animationend', () => {
                 rowElement.classList.remove('shake');
             }, { once: true });
@@ -838,5 +819,3 @@
     </script>
 </body>
 </html>
-
-

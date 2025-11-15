@@ -23,7 +23,7 @@
             margin: 0;
             background-color: #121213;
             color: white;
-            padding-bottom: 20px; /* Space for mobile keyboards */
+            padding-bottom: 20px;
             user-select: none;
         }
 
@@ -52,7 +52,7 @@
             grid-gap: 5px;
             padding: 10px;
             box-sizing: border-box;
-            max-width: 350px; /* Max width for the board */
+            max-width: 350px;
             width: 90%;
             margin: 0 auto;
         }
@@ -191,7 +191,7 @@
         /* Media Queries for Mobile Responsiveness */
         @media (max-width: 600px) {
             :root {
-                --tile-size: 60px; /* Keeping tile size reasonable on smaller screens */
+                --tile-size: 60px;
                 --mobile-tile-size: 55px;
                 --key-height: 48px;
                 --key-width: 38px;
@@ -304,17 +304,16 @@
         </div>
     </div>
 
-    <script>
-        // --- CUSTOM WORD SETTING ---
-        const SECRET_WORD = "CREAM"; // EDIT THIS TO CHANGE THE WORD
-        // ---------------------------
+    <script src="config.js" defer></script> 
 
+    <script>
         const WORD_LENGTH = 5;
         const MAX_GUESSES = 6;
         let currentGuess = 0;
         let currentTile = 0;
         let gameActive = true;
-        const secretLetters = SECRET_WORD.split('');
+        // The SECRET_WORD variable is now loaded from config.js
+        let secretLetters; // Will be initialized in the setup function
 
         // Hardcoded Word List for Validation (Over 2,300 common 5-letter words)
         const DICTIONARY = new Set([
@@ -398,13 +397,35 @@
         const messageBox = document.getElementById('message-box');
         // --------------------
 
-        // --- Event Listeners ---
-        document.addEventListener('keydown', handleKeydown);
-        keyboardContainer.addEventListener('click', handleKeyboardClick);
-        // -----------------------
+        // --- Setup and Initialization ---
+        document.addEventListener('DOMContentLoaded', setupGame);
+        
+        function setupGame() {
+            // Check if SECRET_WORD has been loaded from config.js
+            if (typeof SECRET_WORD === 'undefined') {
+                console.error("SECRET_WORD is not defined. Ensure config.js is loaded correctly.");
+                showMessage("Error: Config not loaded!", true);
+                gameActive = false;
+                return;
+            }
+
+            secretLetters = SECRET_WORD.toUpperCase().split('');
+
+            if (SECRET_WORD.length !== WORD_LENGTH || !DICTIONARY.has(SECRET_WORD.toLowerCase())) {
+                console.error(`SECRET_WORD must be ${WORD_LENGTH} letters and in the dictionary! Current word: ${SECRET_WORD}`);
+                showMessage(`Error: Invalid word: ${SECRET_WORD}`, true);
+                gameActive = false;
+                return;
+            }
+            
+            // --- Event Listeners ---
+            document.addEventListener('keydown', handleKeydown);
+            keyboardContainer.addEventListener('click', handleKeyboardClick);
+        }
+        // ---------------------------------
 
 
-        // --- Game Logic Functions ---
+        // --- Game Logic Functions (rest of the script remains the same) ---
 
         /**
          * Handles physical keyboard input.
@@ -631,14 +652,6 @@
                 rowElement.classList.remove('shake');
             }, { once: true });
         }
-
-        // --- Initial setup check ---
-        if (SECRET_WORD.length !== WORD_LENGTH || !DICTIONARY.has(SECRET_WORD.toLowerCase())) {
-            console.error(`SECRET_WORD must be ${WORD_LENGTH} letters and in the dictionary! Current word: ${SECRET_WORD}`);
-            showMessage("Error: Invalid SECRET_WORD!", true);
-            gameActive = false;
-        }
     </script>
 </body>
 </html>
-

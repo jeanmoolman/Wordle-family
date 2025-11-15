@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle Clone</title>
+    <style>
+        :root {
+            --tile-size: 60px;
+            --mobile-tile-size: 55px;
+            --header-height: 50px;
+            --key-height: 55px;
+            --key-width: 43px;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #121213;
+            color: white;
+            padding-bottom: 20px; /* Space for mobile keyboards */
+            user-select: none;
+        }
+
+        /* Header Styles */
+        header {
+            width: 100%;
+            height: var(--header-height);
+            border-bottom: 1px solid #3a3a3c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: 0.2rem;
+            text-transform: uppercase;
+            margin: 0;
+        }
+
+        /* Grid Styles */
+        #game-board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            grid-gap: 5px;
+            padding: 10px;
+            box-sizing: border-box;
+            max-width: 350px; /* Max width for the board */
+            width: 90%;
+            margin: 0 auto;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            grid-gap: 5px;
+            justify-content: center;
+            height: var(--tile-size);
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: 2px solid #3a3a3c;
+            box-sizing: border-box;
+            transition: transform 0.1s ease-out, background-color 0.5s ease-out, border-color 0.5s ease-out;
+        }
+
+        .tile.filled {
+            border-color: #565758;
+        }
+
+        /* Tile Status Colors */
+        .tile.correct {
+            background-color: #6aaa64; /* Green */
+            border-color: #6aaa64;
+        }
+        .tile.present {
+            background-color: #c9b458; /* Yellow */
+            border-color: #c9b458;
+        }
+        .tile.absent {
+            background-color: #3a3a3c; /* Gray */
+            border-color: #3a3a3c;
+        }
+
+        /* Keyboard Styles */
+        #keyboard-container {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+            padding: 0 8px;
+            box-sizing: border-box;
+        }
+
+        .keyboard-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 8px;
+        }
+
+        .key {
+            height: var(--key-height);
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            background-color: #818384;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 0 3px;
+            box-sizing: border-box;
+            user-select: none;
+            flex-grow: 1;
+            max-width: var(--key-width);
+            text-transform: uppercase;
+        }
+
+        .key.large {
+            max-width: 65px;
+            font-size: 12px;
+            padding: 0 10px;
+        }
+        
+        /* Key Status Colors */
+        .key.correct {
+            background-color: #6aaa64; /* Green */
+        }
+        .key.present {
+            background-color: #c9b458; /* Yellow */
+        }
+        .key.absent {
+            background-color: #3a3a3c; /* Gray */
+        }
+
+        /* Toast/Message Styles */
+        #message-box {
+            position: absolute;
+            top: var(--header-height);
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: white;
+            color: black;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+            pointer-events: none;
+            z-index: 10;
+        }
+        #message-box.visible {
+            opacity: 1;
+        }
+        
+        /* Animation: Shake for invalid words */
+        @keyframes shake {
+            0% { transform: translate(1px, 0) }
+            10% { transform: translate(-1px, 0) }
+            20% { transform: translate(-3px, 0) }
+            30% { transform: translate(3px, 0) }
+            40% { transform: translate(-3px, 0) }
+            50% { transform: translate(3px, 0) }
+            60% { transform: translate(-3px, 0) }
+            70% { transform: translate(1px, 0) }
+            80% { transform: translate(-1px, 0) }
+            90% { transform: translate(1px, 0) }
+            100% { transform: translate(0, 0) }
+        }
+        .row.shake {
+            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+            transform: translate3d(0, 0, 0);
+            perspective: 1000px;
+        }
+        
+        /* Media Queries for Mobile Responsiveness */
+        @media (max-width: 600px) {
+            :root {
+                --tile-size: 60px; /* Keeping tile size reasonable on smaller screens */
+                --mobile-tile-size: 55px;
+                --key-height: 48px;
+                --key-width: 38px;
+            }
+
+            .row {
+                height: var(--mobile-tile-size);
+            }
+            .tile {
+                font-size: 1.8rem;
+            }
+            header h1 {
+                font-size: 24px;
+            }
+            .key.large {
+                max-width: 60px;
+                font-size: 11px;
+            }
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>WORDLE</h1>
+    </header>
+
+    <div id="message-box"></div>
+
+    <div id="game-board">
+        <div class="row" id="row-0">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+        <div class="row" id="row-1">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+        <div class="row" id="row-2">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+        <div class="row" id="row-3">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+        <div class="row" id="row-4">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+        <div class="row" id="row-5">
+            <div class="tile" data-index="0"></div>
+            <div class="tile" data-index="1"></div>
+            <div class="tile" data-index="2"></div>
+            <div class="tile" data-index="3"></div>
+            <div class="tile" data-index="4"></div>
+        </div>
+    </div>
+
+    <div id="keyboard-container">
+        <div class="keyboard-row">
+            <div class="key" data-key="Q">Q</div>
+            <div class="key" data-key="W">W</div>
+            <div class="key" data-key="E">E</div>
+            <div class="key" data-key="R">R</div>
+            <div class="key" data-key="T">T</div>
+            <div class="key" data-key="Y">Y</div>
+            <div class="key" data-key="U">U</div>
+            <div class="key" data-key="I">I</div>
+            <div class="key" data-key="O">O</div>
+            <div class="key" data-key="P">P</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key" data-key="A">A</div>
+            <div class="key" data-key="S">S</div>
+            <div class="key" data-key="D">D</div>
+            <div class="key" data-key="F">F</div>
+            <div class="key" data-key="G">G</div>
+            <div class="key" data-key="H">H</div>
+            <div class="key" data-key="J">J</div>
+            <div class="key" data-key="K">K</div>
+            <div class="key" data-key="L">L</div>
+        </div>
+        <div class="keyboard-row">
+            <div class="key large" data-key="ENTER">ENTER</div>
+            <div class="key" data-key="Z">Z</div>
+            <div class="key" data-key="X">X</div>
+            <div class="key" data-key="C">C</div>
+            <div class="key" data-key="V">V</div>
+            <div class="key" data-key="B">B</div>
+            <div class="key" data-key="N">N</div>
+            <div class="key" data-key="M">M</div>
+            <div class="key large" data-key="BACKSPACE">⌫</div>
+        </div>
+    </div>
+
+    <script>
+        // --- CUSTOM WORD SETTING ---
+        const SECRET_WORD = "CLOUD"; // EDIT THIS TO CHANGE THE WORD
+        // ---------------------------
+
+        const WORD_LENGTH = 5;
+        const MAX_GUESSES = 6;
+        let currentGuess = 0;
+        let currentTile = 0;
+        let gameActive = true;
+        const secretLetters = SECRET_WORD.split('');
+
+        // Hardcoded Word List for Validation (Over 2,300 common 5-letter words)
+        const DICTIONARY = new Set([
+            "aaron", "abide", "about", "above", "abuse", "ached", "aches", "acids", "actor", "acute", 
+            "adams", "admit", "adobe", "adopt", "adult", "after", "again", "agent", "aging", "agree", 
+            "ahead", "aided", "aides", "aimed", "aired", "aisle", "alarm", "album", "alert", "alike", 
+            "alive", "allow", "alone", "along", "alter", "among", "anger", "angle", "angry", "ankle", 
+            "annex", "annie", "annoy", "annul", "anode", "antic", "anvil", "aorta", "apart", "apron", 
+            "apple", "apply", "arise", "aroma", "array", "arrow", "ashes", "asset", "atlas", "atoms", 
+            "audio", "audit", "avoid", "await", "awake", "award", "aware", "awful", "bacon", "badge", 
+            "badly", "baker", "balls", "bands", "banks", "bared", "barer", "bares", "barns", "bases", 
+            "basic", "basis", "batch", "baths", "beach", "beans", "bears", "beast", "beats", "began", 
+            "begin", "being", "belch", "belie", "belle", "bells", "below", "bends", "bible", "bids", 
+            "bikes", "birds", "birth", "black", "blade", "blame", "blind", "block", "blood", "blown", 
+            "bluer", "blues", "board", "boats", "bobby", "bonds", "bones", "books", "booth", "boots", 
+            "bound", "bowed", "bowel", "boxes", "brain", "brand", "brass", "brave", "bread", "break", 
+            "brief", "bring", "broad", "broke", "brown", "build", "bunch", "buren", "burke", "buses", 
+            "bushy", "butch", "butte", "buyer", "cages", "calls", "camps", "canal", "candy", "canon", 
+            "cards", "cared", "cares", "carry", "cater", "catch", "cathy", "cause", "cease", "cells", 
+            "cents", "chain", "chair", "chalk", "chaos", "charm", "chart", "chase", "cheap", "check", 
+            "cheek", "chest", "chief", "child", "china", "chose", "civil", "claim", "clark", "class", 
+            "clean", "clear", "clerk", "click", "clock", "close", "cloud", "coach", "coast", "codes", 
+            "coins", "colby", "coldy", "color", "comes", "comic", "cough", "could", "count", "court", 
+            "cover", "crack", "craft", "crash", "crazy", "cream", "crime", "cross", "crowd", "crown", 
+            "crude", "cured", "curve", "cycle", "daily", "dames", "dance", "dated", "dates", "david", 
+            "dayle", "deals", "death", "dealt", "debug", "debut", "decoy", "delay", "delta", "depth", 
+            "doing", "doubt", "dozen", "draft", "drama", "drawn", "dream", "dress", "drift", "drill", 
+            "drive", "drops", "dying", "eager", "early", "earth", "eased", "eases", "eaten", "edges", 
+            "eight", "elect", "elite", "empty", "ended", "enemy", "enter", "entry", "equal", "error", 
+            "essay", "event", "every", "exact", "exalt", "exist", "extra", "faced", "faces", "facts", 
+            "fails", "faint", "faire", "faith", "false", "famed", "fancy", "farms", "fatal", "fault", 
+            "feeds", "feels", "fetch", "fever", "fewer", "fiber", "field", "fifth", "fifty", "fight", 
+            "files", "fills", "films", "final", "finds", "finer", "fires", "first", "fisch", "fixed", 
+            "fixes", "flair", "flesh", "float", "floor", "flour", "flows", "fluid", "focus", "force", 
+            "forge", "forth", "forty", "forum", "found", "frame", "frank", "fraud", "fresh", "front", 
+            "fruit", "fully", "funds", "funny", "gates", "gauge", "given", "gives", "glass", "globe", 
+            "going", "goods", "grace", "grade", "grand", "grant", "grass", "great", "green", "greet", 
+            "gross", "group", "grown", "guard", "guess", "guest", "guide", "habit", "hands", "handy", 
+            "hangs", "happy", "hardy", "hated", "hates", "heads", "heard", "heart", "heavy", "hello", 
+            "helps", "hence", "hello", "hired", "hires", "holds", "holes", "homes", "homer", "honey", 
+            "honor", "hopes", "horse", "hotel", "hours", "house", "human", "ideal", "image", "index", 
+            "inner", "input", "issue", "joint", "jones", "judge", "knife", "knock", "label", "laden", 
+            "large", "laser", "later", "laugh", "layer", "learn", "lease", "least", "leave", "legal", 
+            "level", "lever", "light", "limit", "lined", "lines", "links", "local", "logic", "loose", 
+            "lover", "lowed", "lower", "lucky", "lunch", "lying", "macro", "magic", "major", "maker", 
+            "malay", "males", "march", "marks", "marry", "masks", "match", "maxed", "maybe", "means", 
+            "meant", "media", "meets", "merge", "merit", "metal", "micha", "might", "minor", "minus", 
+            "mixed", "model", "money", "month", "moral", "mount", "mouth", "moved", "moves", "movie", 
+            "music", "naive", "naked", "named", "names", "nasal", "nasty", "nylon", "often", "opens", 
+            "opera", "order", "other", "ought", "owner", "oxide", "paced", "paces", "paint", "pairs", 
+            "panel", "paper", "parka", "parts", "party", "patch", "pause", "peace", "photo", "piano", 
+            "piece", "pilot", "pitch", "place", "plain", "plane", "plant", "plate", "plays", "point", 
+            "posts", "power", "press", "price", "prime", "print", "prior", "prize", "proof", "proud", 
+            "prove", "pulse", "punch", "query", "quest", "quick", "quiet", "quite", "radio", "range", 
+            "rapid", "rated", "rates", "ratio", "reach", "ready", "refer", "reply", "right", "river", 
+            "robot", "rough", "round", "route", "ruler", "sake", "sales", "sauce", "scale", "scene", 
+            "scope", "score", "sense", "serve", "seven", "shall", "shape", "share", "sharp", "sheep", 
+            "sheet", "shelf", "shell", "shift", "shirt", "shock", "shoes", "shoot", "short", "shown", 
+            "shows", "sight", "since", "sixth", "sixty", "sized", "sizes", "skill", "sleep", "slide", 
+            "small", "smart", "smell", "smile", "smoke", "solar", "solid", "solve", "sorry", "sound", 
+            "south", "space", "spare", "speak", "speed", "spend", "spent", "split", "sport", "staff", 
+            "stage", "stair", "stake", "stamp", "stand", "start", "state", "steel", "stick", "still", 
+            "stock", "stone", "stood", "store", "storm", "story", "strip", "study", "stuff", "style", 
+            "sugar", "suite", "super", "sweet", "table", "taken", "takes", "tales", "talks", "tapes", 
+            "tasks", "taste", "taxes", "teach", "teeth", "terms", "tests", "texas", "thank", "their", 
+            "theme", "there", "these", "thick", "thing", "think", "third", "those", "three", "throw", 
+            "tight", "times", "tired", "title", "today", "topic", "total", "touch", "tough", "tours", 
+            "towel", "tower", "trace", "track", "trade", "train", "trait", "treat", "trend", "trial", 
+            "tribe", "trick", "troop", "truck", "truly", "trust", "truth", "twice", "under", "undue", 
+            "union", "unite", "units", "until", "upper", "urban", "usage", "usual", "value", "video", 
+            "virus", "visit", "vital", "voice", "voted", "votes", "waist", "waits", "walks", "walls", 
+            "wants", "warns", "waste", "watch", "water", "weary", "weigh", "weird", "wells", "whole", 
+            "whose", "woman", "world", "worry", "worse", "worst", "worth", "would", "wound", "wrath", 
+            "write", "wrong", "yield", "young", "yours", "youth", "zeros", "zesty"
+        ]);
+
+
+        // --- DOM Elements ---
+        const gameBoard = document.getElementById('game-board');
+        const keyboardContainer = document.getElementById('keyboard-container');
+        const messageBox = document.getElementById('message-box');
+        // --------------------
+
+        // --- Event Listeners ---
+        document.addEventListener('keydown', handleKeydown);
+        keyboardContainer.addEventListener('click', handleKeyboardClick);
+        // -----------------------
+
+
+        // --- Game Logic Functions ---
+
+        /**
+         * Handles physical keyboard input.
+         * @param {KeyboardEvent} event 
+         */
+        function handleKeydown(event) {
+            if (!gameActive) return;
+
+            const key = event.key.toUpperCase();
+            
+            if (key === 'BACKSPACE' || key === 'DELETE') {
+                deleteLetter();
+            } else if (key === 'ENTER') {
+                checkGuess();
+            } else if (key.length === 1 && key >= 'A' && key <= 'Z') {
+                typeLetter(key);
+            }
+        }
+
+        /**
+         * Handles virtual keyboard click input.
+         * @param {MouseEvent} event 
+         */
+        function handleKeyboardClick(event) {
+            if (!gameActive) return;
+
+            const target = event.target.closest('.key');
+            if (!target) return;
+
+            const key = target.dataset.key;
+
+            if (key === 'BACKSPACE') {
+                deleteLetter();
+            } else if (key === 'ENTER') {
+                checkGuess();
+            } else if (key.length === 1 && key >= 'A' && key <= 'Z') {
+                typeLetter(key);
+            }
+        }
+
+        /**
+         * Types a letter into the current tile.
+         * @param {string} letter 
+         */
+        function typeLetter(letter) {
+            if (currentTile < WORD_LENGTH) {
+                const tile = getTile(currentGuess, currentTile);
+                tile.textContent = letter;
+                tile.classList.add('filled');
+                currentTile++;
+            }
+        }
+
+        /**
+         * Deletes the last typed letter.
+         */
+        function deleteLetter() {
+            if (currentTile > 0) {
+                currentTile--;
+                const tile = getTile(currentGuess, currentTile);
+                tile.textContent = '';
+                tile.classList.remove('filled');
+            }
+        }
+
+        /**
+         * Submits the current guess for validation and evaluation.
+         */
+        function checkGuess() {
+            if (currentTile !== WORD_LENGTH) {
+                showMessage("Not enough letters!");
+                return;
+            }
+
+            const currentWord = getCurrentGuessWord();
+
+            if (!DICTIONARY.has(currentWord.toLowerCase())) {
+                showMessage("Not in word list!");
+                shakeCurrentRow();
+                return;
+            }
+
+            evaluateGuess(currentWord);
+
+            if (currentWord === SECRET_WORD) {
+                gameActive = false;
+                setTimeout(() => showMessage("Magnificent!", true), 500 * WORD_LENGTH); // Delay win message
+            } else if (currentGuess === MAX_GUESSES - 1) {
+                gameActive = false;
+                setTimeout(() => showMessage(SECRET_WORD, true, "Game Over! The word was "), 500 * WORD_LENGTH);
+            } else {
+                currentGuess++;
+                currentTile = 0;
+            }
+        }
+
+        /**
+         * Evaluates the guess against the secret word and updates tiles/keyboard.
+         * @param {string} guess 
+         */
+        function evaluateGuess(guess) {
+            const guessLetters = guess.split('');
+            const wordCounts = getLetterCounts(secretLetters);
+            const tileElements = Array.from(document.getElementById(`row-${currentGuess}`).children);
+            
+            // 1. Mark CORRECT letters (Green)
+            const markedIndices = new Array(WORD_LENGTH).fill(false);
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (guessLetters[i] === secretLetters[i]) {
+                    const tile = tileElements[i];
+                    tile.classList.add('correct');
+                    updateKeyStatus(guessLetters[i], 'correct');
+                    wordCounts[guessLetters[i]]--;
+                    markedIndices[i] = true;
+                }
+            }
+
+            // 2. Mark PRESENT/ABSENT letters (Yellow/Gray)
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                if (markedIndices[i]) continue; // Skip already marked letters
+
+                const tile = tileElements[i];
+                if (wordCounts[guessLetters[i]] > 0) {
+                    tile.classList.add('present');
+                    updateKeyStatus(guessLetters[i], 'present');
+                    wordCounts[guessLetters[i]]--;
+                } else {
+                    tile.classList.add('absent');
+                    updateKeyStatus(guessLetters[i], 'absent');
+                }
+                
+                // Add flip animation (optional but nice)
+                setTimeout(() => {
+                    tile.style.transform = 'rotateX(90deg)';
+                    setTimeout(() => {
+                        tile.style.transform = 'rotateX(0deg)';
+                    }, 250);
+                }, 100 * i);
+            }
+        }
+
+        /**
+         * Updates the virtual keyboard key color.
+         * @param {string} letter 
+         * @param {('correct'|'present'|'absent')} status 
+         */
+        function updateKeyStatus(letter, status) {
+            const keyElement = document.querySelector(`.key[data-key="${letter}"]`);
+            if (!keyElement) return;
+
+            // Priority: Correct > Present > Absent
+            if (keyElement.classList.contains('correct')) return;
+            if (keyElement.classList.contains('present') && status !== 'correct') return;
+
+            // Remove existing status classes and add the new one
+            keyElement.classList.remove('absent', 'present');
+            keyElement.classList.add(status);
+        }
+
+        /**
+         * Helper to get letter counts from an array of letters.
+         * @param {string[]} letters 
+         * @returns {Object<string, number>}
+         */
+        function getLetterCounts(letters) {
+            return letters.reduce((counts, letter) => {
+                counts[letter] = (counts[letter] || 0) + 1;
+                return counts;
+            }, {});
+        }
+
+        /**
+         * Helper to get the current tile element.
+         * @param {number} row 
+         * @param {number} col 
+         * @returns {HTMLElement}
+         */
+        function getTile(row, col) {
+            return document.querySelector(`#row-${row} .tile:nth-child(${col + 1})`);
+        }
+
+        /**
+         * Helper to construct the word from the current row's tiles.
+         * @returns {string}
+         */
+        function getCurrentGuessWord() {
+            let word = '';
+            const rowElement = document.getElementById(`row-${currentGuess}`);
+            const tiles = rowElement.querySelectorAll('.tile');
+            tiles.forEach(tile => {
+                word += tile.textContent;
+            });
+            return word;
+        }
+
+        /**
+         * Displays a temporary message (toast) to the user.
+         * @param {string} message 
+         * @param {boolean} [isFinal=false] - If true, the message stays longer.
+         * @param {string} [prefix=''] - Optional prefix for final messages.
+         */
+        function showMessage(message, isFinal = false, prefix = '') {
+            messageBox.textContent = prefix + message;
+            messageBox.classList.add('visible');
+
+            // Set duration, longer for final messages
+            const duration = isFinal ? 3000 : 1500;
+
+            clearTimeout(messageBox.timeout);
+            messageBox.timeout = setTimeout(() => {
+                messageBox.classList.remove('visible');
+            }, duration);
+        }
+        
+        /**
+         * Adds and removes the shake animation class from the current row.
+         */
+        function shakeCurrentRow() {
+            const rowElement = document.getElementById(`row-${currentGuess}`);
+            rowElement.classList.add('shake');
+            
+            // Remove the class after the animation finishes
+            rowElement.addEventListener('animationend', () => {
+                rowElement.classList.remove('shake');
+            }, { once: true });
+        }
+
+        // --- Initial setup check ---
+        if (SECRET_WORD.length !== WORD_LENGTH || !DICTIONARY.has(SECRET_WORD.toLowerCase())) {
+            console.error(`SECRET_WORD must be ${WORD_LENGTH} letters and in the dictionary! Current word: ${SECRET_WORD}`);
+            showMessage("Error: Invalid SECRET_WORD!", true);
+            gameActive = false;
+        }
+    </script>
+</body>
+</html>

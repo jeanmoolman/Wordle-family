@@ -5,5 +5,6 @@
  * It must be a 5-letter word found in the dictionary array in index.html.
  */
 
-const SECRET_WORD = "crime";
+const SECRET_WORD = "knight";
+
 
